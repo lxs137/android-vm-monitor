@@ -1,0 +1,3 @@
+FROM registry.njuics.cn/library/nginx:latest
+
+COPY ./ /usr/share/nginx/html
