@@ -1,21 +1,8 @@
 import * as cp from "child_process";
 import * as path from "path";
-import { grep } from "shelljs";
+import { cmdExec } from "./command";
 import { getLogger } from "log4js";
 const logger = getLogger("adbUtils");
-
-const cmdExec = (cmd: string): Promise<any> => {
-  if(!cmd) 
-    return Promise.reject("command is empty");
-  return new Promise((resolve, reject) => {
-    cp.exec(cmd, (error, stdout, stderr) => {
-      if (error) 
-        reject(error);
-      // console.log(`cmd(${cmd}): ${stdout}`);
-      resolve(stdout);
-    });
-  });
-}; 
 
 export const disconnectAll = (): Promise<any> => {
   logger.info("disconnect all adb connection");
