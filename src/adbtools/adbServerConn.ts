@@ -1,13 +1,18 @@
 import { EventEmitter } from "events";
 import { Socket, connect } from "net";
 import { cmdFileExec } from "../utils/command";
+const logger = require("log4js").getLogger("adbServerConn");
 
-export interface AdbServerConnectionOpt {
+interface AdbServerConnectionOpt {
   host?: string;
   port?: number;
   adbServerPath?: string;
 }
 
+/**
+ * Send command to local adbserver, command's format:
+ * https://android.googlesource.com/platform/system/core/+/master/adb/SERVICES.TXT
+ */
 export class AdbServerConnection extends EventEmitter {
   private options: AdbServerConnectionOpt;
   private socket: Socket;
@@ -35,9 +40,9 @@ export class AdbServerConnection extends EventEmitter {
     this.socket.end();
   }
 
-  private onError(err: Error) {
-    console.debug("AdbServerConnection error %s", err.message);
-    if(err.message === "ECONNREFUSED") {
+  private onError(err: NodeJS.ErrnoException) {
+    logger.debug("AdbServerConnection error: %s", err);
+    if(err.code === "ECONNREFUSED") {
       cmdFileExec(this.options.adbServerPath || "adb", ["start-server"]).then(
         () => this.connect(),
         (execErr) => {
