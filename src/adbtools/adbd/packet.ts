@@ -8,6 +8,12 @@ export const PacketCommand = {
   "A_AUTH": 0x48545541
 };
 
+export const AuthPacketType = {
+  "TOKEN": 1,
+  "SIGNATURE": 2,
+  "RSAPUBLICKEY": 3
+};
+
 /** 
  * Adb Packet Format
  * struct message {
@@ -24,22 +30,50 @@ export class Packet {
   readonly arg0: number;
   readonly arg1: number;
   readonly length: number;
-  readonly crc32: number;
+  readonly checksum: number;
   readonly magic: number;
   public data: Buffer;
 
-  constructor(buffer: Buffer) {
-    this.command = buffer.readUInt32LE(0);
-    this.arg0 = buffer.readUInt32LE(4);
-    this.arg1 = buffer.readUInt32LE(8);
-    this.length = buffer.readUInt32LE(12);
-    this.crc32 = buffer.readUInt32LE(16);
-    this.magic = buffer.readUInt32LE(20);
-    this.data = new Buffer(0);
+  constructor(command: number, arg0: number, arg1: number, length: number, check: number, magic: number, data: Buffer) {
+    this.command = command;
+    this.arg0 = arg0;
+    this.arg1 = arg1;
+    this.length = length;
+    this.checksum = check;
+    this.magic = magic;
+    this.data = data;
+  }
+
+  static fromBuffer(buffer: Buffer): Packet {
+    return new Packet(
+      buffer.readUInt32LE(0),
+      buffer.readUInt32LE(4),
+      buffer.readUInt32LE(8),
+      buffer.readUInt32LE(12),
+      buffer.readUInt32LE(16),
+      buffer.readUInt32LE(20),
+      new Buffer(0)
+    );
+  }
+
+  static genSendPacket(command: number, arg0: number, arg1: number, data: Buffer): Packet {
+    return new Packet(command, arg0, arg1, data.length, getChecksum(data), getMagic(command), data);
+  }
+
+  public toBuffer() {
+    const buffer = new Buffer(24 + this.length);
+    buffer.writeUInt32LE(this.command, 0);
+    buffer.writeUInt32LE(this.arg0, 4);
+    buffer.writeUInt32LE(this.arg1, 8);
+    buffer.writeUInt32LE(this.length, 12);
+    buffer.writeUInt32LE(this.checksum, 16);
+    buffer.writeUInt32LE(this.magic, 20);
+    this.data.copy(buffer, 24);
+    return buffer;
   }
 
   public verifyChecksum() {
-    return this.crc32 === checkSum(this.data);
+    return this.checksum === getChecksum(this.data);
   }
 
   public verifyMagic() {
@@ -64,11 +98,11 @@ export class Packet {
       case PacketCommand.A_WRTE:
         commandStr = "WRTE"; break;
     }  
-    return `${commandStr} arg0=${this.arg0} arg1=${this.arg1} length=${this.length}`;
+    return `{ \n\t${commandStr} \n\targ0: ${this.arg0} \n\targ1: ${this.arg1} \n\t ${this.data.toString("utf8")}}`;
   }
 }
 
-export const checkSum = (data: Buffer): number => {
+export const getChecksum = (data: Buffer): number => {
   if (data && data.length > 0) {
     return data.reduce((preV, curV) => curV + preV, 0);
   } else {

@@ -36,6 +36,13 @@ export class AdbDaemonServer extends EventEmitter {
     });
   }
 
+  /**
+   * The Same as net.Server.listen 
+   */
+  public listen(...args: any[]) {
+    this.server.listen(args);
+  }
+
   public close() {
     this.server.close();
   }

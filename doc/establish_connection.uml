@@ -11,10 +11,10 @@ Android -> AdbServer: AUTH(TOKEN(1), 0, RandomToken)
 Android <- AdbServer: AUTH(SIGNATURE(2), 0, Sign)
 note right: Sign = SignWithPrivateKey(RandomToken)
 
-== Sign Failed by Android ==
+== Sign Success by Android ==
 Android -> AdbServer: CONNECT(version, maxdata, system-info)
 
-== Sign Success by Android ==
+== Sign Failed by Android ==
 Android -> AdbServer: AUTH(TOKEN(1), 0, NewRandomToken)
 Android <- AdbServer: AUTH(SIGNATURE(2), 0, NewSign)
 note right: NewSign = SignWithDifferentPrivateKey(RandomToken)
