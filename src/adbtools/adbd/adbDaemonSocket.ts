@@ -1,26 +1,44 @@
 import { Socket } from "net";
 import { EventEmitter } from "events";
 import { randomBytes } from "crypto";
-import { parsePublicKey } from "../utils/auth";
+import { pki } from "node-forge";
 import { PacketReader } from "./packetReader";
-import { Packet, PacketCommand, AuthPacketType } from "./packet";
+import { Packet, PacketCommand, AuthPacketType, getSwap32 } from "./packet";
+import { parsePublicKey } from "../utils/auth";
+import { CommandHelper } from "../commandHelper";
 const logger = require("log4js").getLogger("adbDaemonSocket");
 
 const UINT32_MAX = 0xFFFFFFFF;
 const UINT16_MAX = 0xFFFF;
 const TOKEN_LENGTH = 20;
 
+const DevicePropKeys = [
+  "ro.product.name",
+  "ro.product.model",
+  "ro.product.device"
+];
+
+export interface AdbDaemonAuthFunc {
+  (key: pki.Certificate): boolean;
+}
+
 export class AdbDaemonSocket extends EventEmitter {
+  private deviceID: string;
+  private authVerify: AdbDaemonAuthFunc;
   private isEnd: boolean = false;
+  private authorized: boolean = false;
+  private version: number = 1;
+  private maxPayload: number = 4096;
   private socket: Socket;
   private reader: PacketReader;
   private syncSeq: Counter = new Counter(UINT32_MAX);
-  private maxPayload: number = 4096;
   private token: Buffer;
   private signature: Buffer;
 
-  constructor(deviceID: string, conn: Socket) {
+  constructor(deviceID: string, conn: Socket, auth: AdbDaemonAuthFunc) {
     super();
+    this.deviceID = deviceID;
+    this.authVerify = auth;
     this.isEnd = false;
     this.reader = new PacketReader(conn);
     this.reader.on("packet", (packet: Packet) => this.handlePacket(packet));
@@ -55,22 +73,23 @@ export class AdbDaemonSocket extends EventEmitter {
 
   private handleAuthPacket(packet: Packet) {
     switch (packet.arg0) {
-      case AuthPacketType.SIGNATURE:
+      case AuthPacketType.SIGNATURE: {
         this.signature = packet.data;
-        if(!this.signature)
+        if (!this.signature)
           return;
         // This is a fake Android device, doesn't has public key
         // So sign failed, send Auth(Token) msg as response
         // Another side will use other PrivateKey to sign this token
-        this.write(Packet.genSendPacket(PacketCommand.A_AUTH, 
+        this.write(Packet.genSendPacket(PacketCommand.A_AUTH,
           AuthPacketType.TOKEN, 0, this.token));
         break;
-      case AuthPacketType.RSAPUBLICKEY:
-        if(!this.signature) {
+      }
+      case AuthPacketType.RSAPUBLICKEY: {
+        if (!this.signature) {
           logger.error("Public key sent before signature");
           return;
         }
-        if(!(packet.data && packet.data.length >= 1)) {
+        if (!(packet.data && packet.data.length >= 1)) {
           logger.error("Empty RSA public Key");
           return;
         }
@@ -78,10 +97,48 @@ export class AdbDaemonSocket extends EventEmitter {
         const notNullData = packet.data.slice(0, -1);
         parsePublicKey(notNullData).then(
           (key) => {
-            key.verify();
-          },
+            const digestBin = this.token.toString("binary");
+            const signatureBin = this.signature.toString("binary");
+            if (!key.verify(digestBin, signatureBin)) {
+              logger.error("Signature mismatch");
+              return Promise.reject("Signature mismatch");
+            }
+            if (!this.authVerify(key)) {
+              logger.error("Auth failed by custom auth function");
+              return Promise.reject("Auth Failed");
+            }
+            logger.debug("Auth verify pass");
+            return Promise.resolve(key);
+          }
+        ).then(
+          (key) => {
+            return CommandHelper.getDeviceProps(this.deviceID).then(
+              (props) => {
+                const info = DevicePropKeys.map(key => {
+                  if(props[key])
+                    return `${key}=${props[key]}`;
+                  else
+                    return "";
+                }).join("");
+                const infoStr = `device::${info}\0`;
+                return Promise.resolve(new Buffer(infoStr));
+              }
+            ).catch(
+              (err) => {
+                logger.error("Get device props err: %s", err.message);
+                return Promise.reject("Get device props err");
+              }
+            );
+          }
+        ).then(
+          (info) => {
+            this.authorized = true;
+            this.write(Packet.genSendPacket(PacketCommand.A_CNXN, 
+              getSwap32(this.version), this.maxPayload, info));
+          }
         );
         break;
+      }
     }
   }
 

@@ -1,32 +1,35 @@
-import { AdbServerConnection } from "./adbServerConn";
+import { AdbServerConnection } from "./commands/adbServerConn";
+import { Command } from "./commands/command";
 const logger = require("log4js").getLogger("adbCommandHelper");
 
 export class CommandHelper {
-  connection: AdbServerConnection;
   constructor() {
-    this.connection = new AdbServerConnection({
-      host: "localhost",
-      port: 5037,
-      adbServerPath: "adb"
-    });
-    this.connection.connect();
   }
 
-  initConnection(connectCb: (conn: AdbServerConnection) => void, errCb: (err: string) => void): Promise<any> {
+  public connect(host: string = "localhost", port: number = 5037, adbPath: string = "adb"): Promise<AdbServerConnection> {
     return new Promise((resolve, reject) => {
-      this.connection = new AdbServerConnection({
-        host: "localhost",
-        port: 5037,
-        adbServerPath: "adb"
+      const connection = new AdbServerConnection({
+        host: host,
+        port: port,
+        adbServerPath: adbPath
       });
-      this.connection.on("error", (err) => {
+      connection.on("error", (err) => {
         logger.error("AdbServerConnection err: %s", err);
         reject(err);
       });
-      this.connection.on("connect", () => {
-        resolve();
+      connection.on("connect", () => {
+        resolve(connection);
       });
-      this.connection.connect();
+      connection.connect();
     });
   }
+
+  public transport() {
+    return this.connect().then(
+      (conn) => {
+
+      }
+    );
+  }
+
 }

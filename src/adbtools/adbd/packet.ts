@@ -113,3 +113,9 @@ export const getChecksum = (data: Buffer): number => {
 export const getMagic = (data: number): number => {
   return (data ^ 0xffffffff) >>> 0; 
 };
+
+export const getSwap32 = (val: number): number => {
+  const buffer = new Buffer(4);
+  buffer.writeUInt32LE(val, 0);
+  return buffer.readUInt32BE(0);
+};

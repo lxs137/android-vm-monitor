@@ -1,12 +1,7 @@
 import { Socket, Server, createServer } from "net";
 import { EventEmitter } from "events";
-import { pki } from "node-forge";
-import { AdbDaemonSocket } from "./adbDaemonSocket";
+import { AdbDaemonSocket, AdbDaemonAuthFunc } from "./adbDaemonSocket";
 const logger = require("log4js").getLogger("adbDaemonServer");
-
-interface AdbDaemonAuthFunc {
-  (key: pki.Certificate): Promise<any>;
-}
 
 /**
  * This server run on host to simulate an Android device's adbd
@@ -30,7 +25,7 @@ export class AdbDaemonServer extends EventEmitter {
       this.emit("close");
     });
     this.server.on("connection", (conn: Socket) => {
-      const socket = new AdbDaemonSocket(deviceID, conn);
+      const socket = new AdbDaemonSocket(deviceID, conn, auth);
       this.connections.push(socket);
       this.emit("connection", socket);
     });

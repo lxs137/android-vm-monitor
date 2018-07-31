@@ -37,7 +37,7 @@ export class PacketReader extends EventEmitter {
           if(this.buffer.length < 24)
             return;
           const header = this.readBuffer(24);
-          this.packet = new Packet(header);
+          this.packet = Packet.fromBuffer(header);
           if(!this.packet.verifyMagic()) {
             this.emit("error", new PacketMagicError(this.packet));
             return;

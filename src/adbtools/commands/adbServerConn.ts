@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import { Socket, connect } from "net";
-import { cmdFileExec } from "../utils/command";
+import { CommandParser } from "./commandParser";
+import { cmdFileExec } from "../../utils/command";
 const logger = require("log4js").getLogger("adbServerConn");
 
 interface AdbServerConnectionOpt {
@@ -16,10 +17,12 @@ interface AdbServerConnectionOpt {
 export class AdbServerConnection extends EventEmitter {
   private options: AdbServerConnectionOpt;
   private socket: Socket;
+  public parser: CommandParser;
 
   constructor(connOptions: AdbServerConnectionOpt) {
     super();
     this.options = connOptions;
+    this.parser = undefined;
     this.socket = undefined;
   }
 
@@ -29,11 +32,20 @@ export class AdbServerConnection extends EventEmitter {
       port: this.options.port || 5037
     });
     this.socket.setNoDelay(true);
+    this.parser = new CommandParser(this.socket);
     this.socket.on("connect", () => this.emit("connect"));
     this.socket.on("end", () => this.emit("end"));
     this.socket.on("error", this.onError);
     this.socket.on("close", () => this.emit("colse"));
     return this;
+  }
+
+  public send(data: Buffer, cb: () => void) {
+    if(!this.socket.write(data)) {
+      this.socket.once("drain", cb);
+    } else {
+      process.nextTick(cb);
+    }
   }
 
   public close() {
