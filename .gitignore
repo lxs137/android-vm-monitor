@@ -40,3 +40,6 @@ dist/**/*
 
 # Jest
 coverage/
+
+# Ignore webpack target
+compile/**/*

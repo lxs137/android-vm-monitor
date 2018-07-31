@@ -38,6 +38,8 @@ export class AdbDaemonSocket extends EventEmitter {
   constructor(deviceID: string, conn: Socket, auth: AdbDaemonAuthFunc) {
     super();
     this.deviceID = deviceID;
+    this.socket = conn;
+    this.socket.setNoDelay(true);
     this.authVerify = auth;
     this.isEnd = false;
     this.reader = new PacketReader(conn);
@@ -93,10 +95,10 @@ export class AdbDaemonSocket extends EventEmitter {
           logger.error("Empty RSA public Key");
           return;
         }
-        // Skip null in data
-        const notNullData = packet.data.slice(0, -1);
-        parsePublicKey(notNullData).then(
+        logger.debug("Receive RSA Public Key: %s", packet.data.toString("base64"));
+        parsePublicKey(packet.data).then(
           (key) => {
+            logger.debug("Parse public key");
             const digestBin = this.token.toString("binary");
             const signatureBin = this.signature.toString("binary");
             if (!key.verify(digestBin, signatureBin)) {
@@ -109,6 +111,10 @@ export class AdbDaemonSocket extends EventEmitter {
             }
             logger.debug("Auth verify pass");
             return Promise.resolve(key);
+          },
+          (err) => {
+            logger.error("Parse Public Key err: %s", err.message);
+            return Promise.reject("Parse Public Key err");
           }
         ).then(
           (key) => {
@@ -152,7 +158,7 @@ export class AdbDaemonSocket extends EventEmitter {
       this.token = token;
       logger.debug("Create token: %s", token.toString("base64"));
       this.write(Packet.genSendPacket(PacketCommand.A_AUTH,
-         AuthPacketType.TOKEN, 0, this.token));
+         AuthPacketType.TOKEN, 0, token));
     });
   }
 
@@ -164,8 +170,8 @@ export class AdbDaemonSocket extends EventEmitter {
   public write(packet: Packet) {
     if(this.isEnd)
       return;
-    logger.debug("Output packet: %s", packet.toString());
     this.socket.write(packet.toBuffer());
+    logger.debug("Output packet: %s", packet.toString());
   }
 
   public end() {

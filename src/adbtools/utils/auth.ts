@@ -25,7 +25,12 @@ export const parsePublicKey = (buffer: Buffer): Promise<any> => {
     if(!match) {
       reject("Unrecognizable public key format");
     }
-    const key = readPublicKey(new Buffer(match[1], "base64"), match[2]);
+    let key;
+    try {
+      key = readPublicKey(new Buffer(match[1], "base64"), match[2]);
+    } catch(err) {
+      reject(err);
+    }
     resolve(key);
   });
 };
