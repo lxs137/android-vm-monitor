@@ -1,7 +1,7 @@
 
 import { EventEmitter } from "events";
 import { Readable } from "stream";
-import { Packet } from "./packet";
+import { Packet } from "adbtools/adbd/packet";
 
 export class PacketReader extends EventEmitter {
   private inBody: boolean = false;

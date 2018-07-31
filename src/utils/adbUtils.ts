@@ -1,6 +1,6 @@
 import * as cp from "child_process";
 import * as path from "path";
-import { cmdExec } from "./command";
+import { cmdExec } from "utils/command";
 import { getLogger } from "log4js";
 const logger = getLogger("adbUtils");
 

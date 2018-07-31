@@ -1,8 +1,8 @@
 import * as http from "http";
 import * as ws from "ws";
 import * as queryString from "query-string";
-import * as miniCapUtils from "./utils/miniCapUtils";
-import * as heartbeat from "./utils/heartbeat";
+import * as miniCapUtils from "utils/miniCapUtils";
+import * as heartbeat from "utils/heartbeat";
 import { getLogger } from "log4js";
 const logger = getLogger("websocket");
 

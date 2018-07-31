@@ -1,10 +1,10 @@
 import { Response, Request } from "express";
 import * as Joi from "joi";
 import { getLogger } from "log4js";
-import * as vmCtrl from "../controllers/vmCtrl";
-import * as adbUtils from "../utils/adbUtils";
-import * as netUtils from "../utils/netUtils";
-import { retry } from "../utils/retry";
+import * as vmCtrl from "controllers/vmCtrl";
+import * as adbUtils from "utils/adbUtils";
+import * as netUtils from "utils/netUtils";
+import { retry } from "utils/retry";
 const logger = getLogger("vmAPI");
 
 export const CheckNetConnectedSchema = {

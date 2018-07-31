@@ -1,5 +1,5 @@
 import { Socket } from "net";
-import { decodeLength } from "./encoder";
+import { decodeLength } from "adbtools/commands/encoder";
 
 export const ResponseCode = {
   OKAY: "OKAY",

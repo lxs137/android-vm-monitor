@@ -1,4 +1,4 @@
-import * as netUtils from "../src/utils/netUtils";
+import * as netUtils from "utils/netUtils";
 
 describe("Net Utils Test", () => {
   const validIP = "114.212.80.19";

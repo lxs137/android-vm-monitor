@@ -1,6 +1,6 @@
 import { Response, Request, NextFunction, Router } from "express";
-import { validate } from "../middlewares/reqTypeValidate";
-import * as vmAPI from "../apis/vmAPI";
+import { validate } from "middlewares/reqTypeValidate";
+import * as vmAPI from "apis/vmAPI";
 
 const indexRouter = Router();
 

@@ -1,7 +1,7 @@
 import { Document } from "mongoose";
 import { getLogger } from "log4js";
-import { VM } from "../models/db/vm";
-import { Assistant } from "../models/db/assistant";
+import { VM } from "models/db/vm";
+import { Assistant } from "models/db/assistant";
 const logger = getLogger("vmCtrl");
 
 export interface VMUpdate {

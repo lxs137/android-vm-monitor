@@ -4,6 +4,7 @@ module.exports = {
       tsConfigFile: 'tsconfig.json'
     }
   },
+  moduleDirectories: ["node_modules", "src"],
   moduleFileExtensions: [
     'ts',
     'js'

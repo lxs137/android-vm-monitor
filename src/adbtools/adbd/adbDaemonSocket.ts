@@ -2,10 +2,10 @@ import { Socket } from "net";
 import { EventEmitter } from "events";
 import { randomBytes } from "crypto";
 import { pki } from "node-forge";
-import { PacketReader } from "./packetReader";
-import { Packet, PacketCommand, AuthPacketType, getSwap32 } from "./packet";
-import { parsePublicKey } from "../utils/auth";
-import { CommandHelper } from "../commandHelper";
+import { PacketReader } from "adbtools/adbd/packetReader";
+import { Packet, PacketCommand, AuthPacketType, getSwap32 } from "adbtools/adbd/packet";
+import { parsePublicKey } from "adbtools/utils/auth";
+import { CommandHelper } from "adbtools/commandHelper";
 const logger = require("log4js").getLogger("adbDaemonSocket");
 
 const UINT32_MAX = 0xFFFFFFFF;

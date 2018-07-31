@@ -1,7 +1,7 @@
-import * as miniCapUtils from "../src/utils/miniCapUtils";
+import * as miniCapUtils from "utils/miniCapUtils";
 
 describe("MiniCap Utils Test", () => {
-  const adbIP = "114.212.80.19:10001";
+  const adbIP = "192.168.1.154:5555";
   it("Forward minicap to local port", (done) => {
     miniCapUtils.forwardToLocalPort(adbIP).then(
       () => done()

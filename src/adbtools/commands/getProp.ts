@@ -1,5 +1,5 @@
-import { Command } from "./command";
-import { ResponseCode } from "./commandParser";
+import { Command } from "adbtools/commands/command";
+import { ResponseCode } from "adbtools/commands/commandParser";
 
 const PROP_REGEX = /^\[([\s\S]*?)\]: \[([\s\S]*?)\]\r?$/gm;
 

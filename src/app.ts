@@ -7,8 +7,8 @@ import * as mung from "express-mung";
 import * as log4js from "log4js";
 import * as mongoose from "mongoose";
 import * as cors from "cors";
-import indexRouter from "./routes/index";
-import { filterLogResHeader } from "./middlewares/logFilter";
+import indexRouter from "routes/index";
+import { filterLogResHeader } from "middlewares/logFilter";
 
 // Init logger
 log4js.configure({

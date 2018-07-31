@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
-import { CommandParser } from "./commandParser";
-import { encode } from "./encoder";
-import { AdbServerConnection } from "./adbServerConn";
+import { CommandParser } from "adbtools/commands/commandParser";
+import { encode } from "adbtools/commands/encoder";
+import { AdbServerConnection } from "adbtools/commands/adbServerConn";
 const logger = require("log4js").getLogger("command");
 
 export abstract class Command {

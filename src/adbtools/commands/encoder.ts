@@ -10,4 +10,4 @@ export const encodeLength = (len: number): string => {
 
 export const decodeLength = (str: string): number => {
   return parseInt(str, 16);
-}
+};

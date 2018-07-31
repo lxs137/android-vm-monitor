@@ -1,4 +1,4 @@
-import * as adbUtils from "../src/utils/adbUtils";
+import * as adbUtils from "utils/adbUtils";
 
 describe("Adb Utils Test", () => {
   const deviceIP = "192.168.1.154:5555";

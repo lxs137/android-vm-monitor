@@ -1,4 +1,4 @@
-import * as ping from "ping";
+const ping  = require("ping");
 
 const PingOption = {
   timeout: 4,

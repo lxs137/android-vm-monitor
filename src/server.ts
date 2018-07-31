@@ -2,7 +2,7 @@ import * as errorHandler from "errorhandler";
 import * as express from "express";
 import * as http from "http";
 import { initWsServer } from "./ws-server";
-import * as adbUtils from "./utils/adbUtils";
+import * as adbUtils from "utils/adbUtils";
 import { getLogger } from "log4js";
 const logger = getLogger("server");
 

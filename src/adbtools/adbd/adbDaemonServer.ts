@@ -1,6 +1,6 @@
 import { Socket, Server, createServer } from "net";
 import { EventEmitter } from "events";
-import { AdbDaemonSocket, AdbDaemonAuthFunc } from "./adbDaemonSocket";
+import { AdbDaemonSocket, AdbDaemonAuthFunc } from "adbtools/adbd/adbDaemonSocket";
 const logger = require("log4js").getLogger("adbDaemonServer");
 
 /**

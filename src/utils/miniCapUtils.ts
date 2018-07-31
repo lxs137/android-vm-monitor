@@ -1,6 +1,6 @@
 import * as net from "net";
-import * as adbUtils from "./adbUtils";
-import * as netUtils from "./netUtils";
+import * as adbUtils from "utils/adbUtils";
+import * as netUtils from "utils/netUtils";
 import { getLogger } from "log4js";
 const logger = getLogger("miniCapUtils");
 
