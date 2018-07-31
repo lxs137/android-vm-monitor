@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "npm run serve",
-    "build": "npm run build-ts && npm run tslint",
+    "build": "webpack --progress --config webpack.config.js",
+    "ts-build": "npm run build-ts && npm run tslint",
     "serve": "node dist/server.js",
     "production-serve": "env NODE_ENV=production node dist/server.js",
     "watch-node": "nodemon dist/server.js",

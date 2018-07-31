@@ -47,7 +47,7 @@ export class CommandParser {
       let data = new Buffer(0);
       if(this.isEnd)
         return resolve(data);
-      this.stream.once("readable", () => {
+      this.stream.on("readable", () => {
         let chunk;
         while(chunk = this.stream.read()) {
           data = Buffer.concat([data, chunk]);
@@ -55,10 +55,10 @@ export class CommandParser {
         if(this.isEnd)
           return resolve(data);
       });
-      this.stream.once("error", (err) => {
+      this.stream.on("error", (err) => {
         reject(err);
       });
-      this.stream.once("end", () => {
+      this.stream.on("end", () => {
         this.isEnd = true;
         resolve(data);
       });

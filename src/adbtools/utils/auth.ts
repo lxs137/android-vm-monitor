@@ -21,7 +21,7 @@ const RE = /^((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)\0?
 
 export const parsePublicKey = (buffer: Buffer): Promise<any> => {
   return new Promise((resolve, reject) => {
-    const match = RE.exec(buffer.toString("base64"));
+    const match = RE.exec(<any>buffer);
     if(!match) {
       reject("Unrecognizable public key format");
     }

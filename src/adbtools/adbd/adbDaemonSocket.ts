@@ -98,7 +98,6 @@ export class AdbDaemonSocket extends EventEmitter {
         logger.debug("Receive RSA Public Key: %s", packet.data.toString("base64"));
         parsePublicKey(packet.data).then(
           (key) => {
-            logger.debug("Parse public key");
             const digestBin = this.token.toString("binary");
             const signatureBin = this.signature.toString("binary");
             if (!key.verify(digestBin, signatureBin)) {

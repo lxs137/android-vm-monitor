@@ -1,6 +1,14 @@
 var fs = require("fs");
 var path = require('path');
 var TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+var nodeModules = {};
+fs.readdirSync("node_modules")
+  .filter(function (x) {
+    return [".bin"].indexOf(x) === -1;
+  })
+  .forEach(function (mod) {
+    nodeModules[mod] = "commonjs " + mod;
+  });
 
 module.exports = {
   entry: __dirname + "/src/adbd.ts",
@@ -29,6 +37,7 @@ module.exports = {
     }]
   },
   target: "node",
+  externals: nodeModules,
   mode: "development",
   optimization: {
     // We no not want to minimize our code.
