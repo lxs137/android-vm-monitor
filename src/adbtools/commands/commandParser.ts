@@ -26,7 +26,7 @@ export class CommandParser {
     return new Promise((resolve, reject) => {
       if (this.isEnd)
         return resolve(true);
-      this.stream.once("readable", () => {
+      this.stream.on("readable", () => {
         while (this.stream.read())
           continue;
       });
@@ -55,10 +55,10 @@ export class CommandParser {
         if(this.isEnd)
           return resolve(data);
       });
-      this.stream.on("error", (err) => {
+      this.stream.once("error", (err) => {
         reject(err);
       });
-      this.stream.on("end", () => {
+      this.stream.once("end", () => {
         this.isEnd = true;
         resolve(data);
       });
