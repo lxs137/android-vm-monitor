@@ -87,7 +87,8 @@ export class AdbDaemonSocket extends EventEmitter {
           logger.error("Public key sent before signature");
           return;
         }
-        if (!(packet.data && packet.data.length >= 1)) {
+        // packet.data may be "\0" 
+        if (!(packet.data && packet.data.length >= 2)) {
           logger.error("Empty RSA public Key");
           return;
         }
