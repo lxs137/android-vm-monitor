@@ -16,7 +16,9 @@ export class TransportCommand extends Command {
         if(response === ResponseCode.OKAY) {
           return Promise.resolve();
         } else if(response === ResponseCode.FAIL) {
-          return this.parser.readError();
+          return this.parser.readError().then(
+            (errStr) => Promise.reject(new Error(errStr))
+          );
         } else {
           return Promise.reject(
             new Error("Unexpected response('OKAY' or 'FAIL'): " + response));

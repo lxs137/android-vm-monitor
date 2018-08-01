@@ -24,24 +24,27 @@ describe("Adb Daemon Server Test", () => {
     done();
   });
 
-  // it("Test connect to server", (done) => {
-  //   const socket = net.connect({
-  //     port: serverPort
-  //   });
-  //   socket.on("connect", () => {
-  //     done();
-  //   });
-  // });
+  it("Test connect to server", (done) => {
+    const socket = net.connect({
+      port: serverPort
+    });
+    socket.on("connect", () => {
+      done();
+    });
+  });
 
   it("Test adb connect", (done) => {
-    // setTimeout(() => done(), 60000);
     ensureDeviceConnect("localhost:" + serverPort).then(
       () => done(),
       (err) => {
         console.error(err.message);
       }
     );
-  }, 60000);
+  }, 10000);
+
+  it("Test connect to a remote device", (done) => {
+    
+  });
 
   afterAll((done) => {
     server.close();

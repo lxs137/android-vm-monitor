@@ -47,14 +47,15 @@ export class CommandParser {
       let data = new Buffer(0);
       if(this.isEnd)
         return resolve(data);
-      this.stream.on("readable", () => {
+      const tryRead = () => {
         let chunk;
-        while(chunk = this.stream.read()) {
+        while (chunk = this.stream.read()) {
           data = Buffer.concat([data, chunk]);
         }
-        if(this.isEnd)
+        if (this.isEnd)
           return resolve(data);
-      });
+      };
+      this.stream.on("readable", () => tryRead());
       this.stream.once("error", (err) => {
         reject(err);
       });
@@ -62,7 +63,8 @@ export class CommandParser {
         this.isEnd = true;
         resolve(data);
       });
-      this.stream.read(0);
+      // If the stream never be readable, this promise will also end
+      tryRead();
     });
   }
 
@@ -74,14 +76,16 @@ export class CommandParser {
       } else if(this.isEnd) {
         return reject(moreBytesErr);
       }
-      this.stream.once("readable", () => {
+      const tryRead = () => {
         let chunk: Buffer;
         if (chunk = this.stream.read(len)) {
-          if(len === chunk.length)
+          if (len === chunk.length)
             return resolve(chunk);
         }
-        return reject(moreBytesErr);
-      });
+        if(this.isEnd)
+          return reject(moreBytesErr);
+      };
+      this.stream.once("readable", () => tryRead());
       this.stream.once("error", (err) => {
         reject(err);
       });
@@ -89,7 +93,8 @@ export class CommandParser {
         this.isEnd = true;
         reject(moreBytesErr);
       });
-      this.stream.read(0);
+      // If the stream never be readable, this promise will also end
+      tryRead();
     });
   }
 
@@ -108,10 +113,10 @@ export class CommandParser {
     );
   }
 
-  public readError(): Promise<void> {
+  public readError(): Promise<string> {
     return this.readValue().then(
       (data) => {
-        return Promise.reject(new Error(data.toString()));
+        return Promise.resolve(data.toString());
       }
     );
   }

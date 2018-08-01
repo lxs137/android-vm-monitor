@@ -55,22 +55,18 @@ export class AdbDaemonSocket extends EventEmitter {
     if(this.isEnd)
       return;
     logger.debug("Input packet: %s", packet.toString());
-    try {
-      switch (packet.command) {
-        case PacketCommand.A_AUTH:
-          this.handleAuthPacket(packet); break;
-        case PacketCommand.A_CLSE:
-          break;
-        case PacketCommand.A_CNXN:
-          this.handleConnectPacket(packet); break;
-        case PacketCommand.A_SYNC:
-          this.handleSyncPacket(packet); break;
-        default:
-          break;
-      }      
-    } catch (error) {
-      logger.error("Handle packet error: %s", error.message);
-    }
+    switch (packet.command) {
+      case PacketCommand.A_AUTH:
+        this.handleAuthPacket(packet); break;
+      case PacketCommand.A_CLSE:
+        break;
+      case PacketCommand.A_CNXN:
+        this.handleConnectPacket(packet); break;
+      case PacketCommand.A_SYNC:
+        this.handleSyncPacket(packet); break;
+      default:
+        break;
+    } 
   }
 
   private handleAuthPacket(packet: Packet) {
@@ -141,6 +137,8 @@ export class AdbDaemonSocket extends EventEmitter {
             this.write(Packet.genSendPacket(PacketCommand.A_CNXN, 
               getSwap32(this.version), this.maxPayload, info));
           }
+        ).catch(
+          (err) => logger.error("Handle Auth Packet Error: %s", err)
         );
         break;
       }
@@ -169,8 +167,8 @@ export class AdbDaemonSocket extends EventEmitter {
   public write(packet: Packet) {
     if(this.isEnd)
       return;
-    this.socket.write(packet.toBuffer());
     logger.debug("Output packet: %s", packet.toString());
+    this.socket.write(packet.toBuffer());
   }
 
   public end() {

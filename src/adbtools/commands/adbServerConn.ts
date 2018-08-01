@@ -17,6 +17,7 @@ interface AdbServerConnectionOpt {
 export class AdbServerConnection extends EventEmitter {
   private options: AdbServerConnectionOpt;
   private socket: Socket;
+  private tryStartServer: boolean = false;
   public parser: CommandParser;
 
   constructor(connOptions: AdbServerConnectionOpt) {
@@ -35,7 +36,7 @@ export class AdbServerConnection extends EventEmitter {
     this.parser = new CommandParser(this.socket);
     this.socket.on("connect", () => this.emit("connect"));
     this.socket.on("end", () => this.emit("end"));
-    this.socket.on("error", this.onError);
+    this.socket.on("error", (err) => this.onError(err));
     this.socket.on("close", () => this.emit("colse"));
     return this;
   }
@@ -49,22 +50,21 @@ export class AdbServerConnection extends EventEmitter {
   }
 
   public close() {
+    logger.info(`Connection(${this.socket.localAddress}) close.`);
     this.socket.end();
   }
 
   private onError(err: NodeJS.ErrnoException) {
-    logger.debug("AdbServerConnection error: %s", err);
-    if(err.code === "ECONNREFUSED") {
+    if(err.code === "ECONNREFUSED" && !this.tryStartServer) {
+      this.tryStartServer = true;
+      logger.info("Try to start local adb server");
       cmdFileExec(this.options.adbServerPath || "adb", ["start-server"]).then(
         () => this.connect(),
-        (execErr) => {
-          this.emit("error", execErr);
-          this.socket.end();
-        }
+        (execErr) => this.onError(execErr)
       );
     } else {
-      this.emit("error", err);
-      this.socket.end();
+      logger.error("AdbServerConnection err: %s", err);
+      this.close();
     }
   }
 }

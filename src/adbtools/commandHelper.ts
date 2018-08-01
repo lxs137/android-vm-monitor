@@ -1,7 +1,4 @@
-import { AdbServerConnection } from "adbtools/commands/adbServerConn";
-import { CommandParser } from "adbtools/commands/commandParser";
-import { GetPropCommand } from "adbtools/commands/getProp";
-import { TransportCommand } from "adbtools/commands/transport";
+import { AdbServerConnection, CommandParser, GetPropCommand, TransportCommand, ConnectDeviceCommand } from "adbtools/commands";
 const logger = require("log4js").getLogger("adbCommandHelper");
 
 export class CommandHelper {
@@ -12,10 +9,6 @@ export class CommandHelper {
         host: host,
         port: port,
         adbServerPath: adbPath
-      });
-      connection.on("error", (err) => {
-        logger.error("AdbServerConnection err: %s", err);
-        reject(err);
       });
       connection.on("connect", () => {
         resolve(connection);
@@ -30,19 +23,39 @@ export class CommandHelper {
         const cmd = new GetPropCommand(conn);
         return cmd.execute().then(
           (props) => props,
-          (err) => logger.error("GetProps error: %s", err.message)
+          (err) => Promise.reject(new Error(
+            `Get Properties error: ${err.message}`
+          ))
+        );
+      }
+    );
+  }
+
+  public static connectDevice(deviceID: string): Promise<AdbServerConnection> {
+    return this.connect().then(
+      (conn) => {
+        const cmd = new ConnectDeviceCommand(conn, deviceID);
+        return cmd.execute().then(
+          () => Promise.resolve(conn),
+          (err) => Promise.reject(new Error(
+            `Connect to device(${deviceID}) err: ${err.message}`
+          ))
         );
       }
     );
   }
 
   private static transport(deviceID: string): Promise<AdbServerConnection> {
-    return this.connect().then(
+    return this.connectDevice(deviceID).then(
+      () => this.connect()
+    ).then(
       (conn) => {
         const cmd = new TransportCommand(conn, deviceID);
         return cmd.execute().then(
           () => Promise.resolve(conn),
-          (err) => logger.error("Transport error: %s", err.message)
+          (err) => Promise.reject(new Error(
+            `Transport to ${deviceID} error: ${err.message}`
+          ))
         );
       }
     );
