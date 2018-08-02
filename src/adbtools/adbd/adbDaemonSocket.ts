@@ -58,7 +58,7 @@ export class AdbDaemonSocket extends EventEmitter {
     switch (packet.command) {
       case PacketCommand.A_AUTH:
         this.handleAuthPacket(packet); break;
-      case PacketCommand.A_CLSE:
+      case PacketCommand.A_OPEN:
         break;
       case PacketCommand.A_CNXN:
         this.handleConnectPacket(packet); break;

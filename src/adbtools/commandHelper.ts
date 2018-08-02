@@ -1,6 +1,8 @@
 import { AdbServerConnection, CommandParser, GetPropCommand, TransportCommand, ConnectDeviceCommand } from "adbtools/commands";
 const logger = require("log4js").getLogger("adbCommandHelper");
 
+const REMOTE_DEVICE_RE = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}:\d+$/;
+
 export class CommandHelper {
 
   public static connect(host: string = "localhost", port: number = 5037, adbPath: string = "adb"): Promise<AdbServerConnection> {
@@ -32,6 +34,8 @@ export class CommandHelper {
   }
 
   public static connectDevice(deviceID: string): Promise<AdbServerConnection> {
+    if(!REMOTE_DEVICE_RE.exec(deviceID))
+      return this.connect();
     return this.connect().then(
       (conn) => {
         const cmd = new ConnectDeviceCommand(conn, deviceID);
@@ -46,6 +50,7 @@ export class CommandHelper {
   }
 
   private static transport(deviceID: string): Promise<AdbServerConnection> {
+    
     return this.connectDevice(deviceID).then(
       () => this.connect()
     ).then(

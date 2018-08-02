@@ -11,7 +11,7 @@ log4js.configure({
     default: { appenders: ["console"], level: "debug" }
   }
 });
-const server = new AdbDaemonServer("114.212.189.146:10001", () => true);
+const server = new AdbDaemonServer("01ce8e1c90cdeb12", () => true);
 server.listen({
   port: 20001
 });
