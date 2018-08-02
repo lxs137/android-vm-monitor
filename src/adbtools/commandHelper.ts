@@ -49,8 +49,7 @@ export class CommandHelper {
     );
   }
 
-  private static transport(deviceID: string): Promise<AdbServerConnection> {
-    
+  public static transport(deviceID: string): Promise<AdbServerConnection> {
     return this.connectDevice(deviceID).then(
       () => this.connect()
     ).then(

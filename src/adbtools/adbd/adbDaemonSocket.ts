@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import { randomBytes } from "crypto";
 import { pki } from "node-forge";
 import { PacketReader } from "adbtools/adbd/packetReader";
+import { CommandHandler, CommandHandlers } from "adbtools/adbd/commandHandler";
 import { Packet, PacketCommand, AuthPacketType, getSwap32 } from "adbtools/adbd/packet";
 import { parsePublicKey } from "adbtools/utils/auth";
 import { CommandHelper } from "adbtools/commandHelper";
@@ -34,6 +35,8 @@ export class AdbDaemonSocket extends EventEmitter {
   private syncSeq: Counter = new Counter(UINT32_MAX);
   private token: Buffer;
   private signature: Buffer;
+  private commandHandlerSeq: Counter = new Counter(UINT32_MAX);
+  private handlers: CommandHandlers = new CommandHandlers();
 
   constructor(deviceID: string, conn: Socket, auth: AdbDaemonAuthFunc) {
     super();
@@ -58,14 +61,16 @@ export class AdbDaemonSocket extends EventEmitter {
     switch (packet.command) {
       case PacketCommand.A_AUTH:
         this.handleAuthPacket(packet); break;
-      case PacketCommand.A_OPEN:
-        break;
       case PacketCommand.A_CNXN:
         this.handleConnectPacket(packet); break;
       case PacketCommand.A_SYNC:
         this.handleSyncPacket(packet); break;
-      default:
-        break;
+      case PacketCommand.A_OPEN:
+        this.handleCommandExecPacket(packet); break;
+      case PacketCommand.A_WRTE:
+      case PacketCommand.A_OKAY:
+      case PacketCommand.A_CLSE:
+        this.transPacketToCommandHandler(packet); break;
     } 
   }
 
@@ -165,6 +170,46 @@ export class AdbDaemonSocket extends EventEmitter {
       this.syncSeq.next(), undefined));
   }
 
+  private handleCommandExecPacket(packet: Packet) {
+    if(!this.authorized) {
+      logger.error("Ignore unauthorized socket");
+      return;
+    }
+    if(!packet.data || packet.data.length <= 1) {
+      logger.error("Ignore empty packet");
+      return;
+    }
+    const command = packet.data.toString();
+    logger.info("Handle command: %s", command);
+    const remoteID = packet.arg0;
+    const localID = this.commandHandlerSeq.next();
+    const handle = new CommandHandler(this.deviceID, localID, remoteID, this.maxPayload, this.socket);
+    this.handlers.add(localID.toString(), handle);
+    logger.debug("%s CommandHandlers is handling", this.handlers.count);
+    handle.on("end", () => {
+      this.handlers.remove(localID.toString());
+      logger.info("'%s' handle is done", command);
+    });
+    handle.on("error", (err) => {
+      this.handlers.remove(localID.toString());
+      logger.error("'%s' handle has err: %s", command);
+    });
+    handle.handle(packet);
+  }
+
+  private transPacketToCommandHandler(packet: Packet) {
+    if (!this.authorized) {
+      logger.error("Ignore unauthorized socket");
+      return;
+    }
+    const localID = packet.arg1;
+    const handle = this.handlers.get(localID.toString());
+    if(handle)
+      handle.handle(packet);
+    else
+      logger.info("local-id(%s) handle is not exist", localID);
+  }
+
   public write(packet: Packet) {
     if(this.isEnd)
       return;
@@ -176,6 +221,7 @@ export class AdbDaemonSocket extends EventEmitter {
     if(this.isEnd)
       return;
     this.socket.end();
+    this.handlers.removeAll();
     this.isEnd = true;
     this.emit("end");
   }

@@ -1,5 +1,6 @@
 export * from "adbtools/commands/adbServerConn";
 export * from "adbtools/commands/commandParser";
+export * from "adbtools/commands/encoder";
 
 // Commands
 // Host Services

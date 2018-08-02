@@ -28,7 +28,7 @@ export class PacketReader extends EventEmitter {
             break;
           this.packet.data = this.readBuffer(this.packet.length);
           if(!this.packet.verifyChecksum()) {
-            this.emit("error", new PacketCheckSumError(this.packet));
+            this.emit("error", new Error("Packet's checksum is not match"));
             return;
           }
           this.emit("packet", this.packet);
@@ -39,7 +39,7 @@ export class PacketReader extends EventEmitter {
           const header = this.readBuffer(24);
           this.packet = Packet.fromBuffer(header);
           if(!this.packet.verifyMagic()) {
-            this.emit("error", new PacketMagicError(this.packet));
+            this.emit("error", new Error("Packet's magic is not match command"));
             return;
           }
           if(this.packet.length === 0) {
@@ -68,27 +68,5 @@ export class PacketReader extends EventEmitter {
     const chunk = this.buffer.slice(0, length);
     this.buffer = (this.buffer.length === length) ? undefined : this.buffer.slice(length);
     return chunk;
-  }
-}
-
-export class PacketCheckSumError extends Error {
-  packet: Packet;
-  constructor(packet: Packet) {
-    super();
-    this.packet = packet;
-    this.name = "PacketCheckSumError";
-    this.message = "Packet's checksum is not match";
-    Error.captureStackTrace(this, PacketCheckSumError);
-  }
-}
-
-export class PacketMagicError extends Error {
-  packet: Packet;
-  constructor(packet: Packet) {
-    super();
-    this.packet = packet;
-    this.name = "PacketmagicError";
-    this.message = "Packet's magic is not match command";
-    Error.captureStackTrace(this, PacketMagicError);
   }
 }

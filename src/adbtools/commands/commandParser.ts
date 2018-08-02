@@ -1,4 +1,5 @@
 import { Socket } from "net";
+import { EventEmitter } from "events";
 import { decodeLength } from "adbtools/commands/encoder";
 
 export const ResponseCode = {
@@ -31,10 +32,12 @@ export class CommandParser {
           continue;
       });
       this.stream.once("error", (err) => {
+        this.stream.removeAllListeners("readable");
         reject(err);
       });      
       this.stream.once("end", () => {
         this.isEnd = true;
+        this.stream.removeAllListeners("readable");
         resolve(true);
       });
       this.stream.read(0);
@@ -52,15 +55,19 @@ export class CommandParser {
         while (chunk = this.stream.read()) {
           data = Buffer.concat([data, chunk]);
         }
-        if (this.isEnd)
+        if (this.isEnd) {
+          this.stream.removeAllListeners("readable");
           return resolve(data);
+        }
       };
       this.stream.on("readable", () => tryRead());
       this.stream.once("error", (err) => {
+        this.stream.removeAllListeners("readable");
         reject(err);
       });
       this.stream.once("end", () => {
         this.isEnd = true;
+        this.stream.removeAllListeners("readable");
         resolve(data);
       });
       // If the stream never be readable, this promise will also end
@@ -79,22 +86,62 @@ export class CommandParser {
       const tryRead = () => {
         let chunk: Buffer;
         if (chunk = this.stream.read(len)) {
-          if (len === chunk.length)
+          len -= chunk.length;
+          if (len === 0) {
+            this.stream.removeAllListeners("readable");            
             return resolve(chunk);
+          }
         }
-        if(this.isEnd)
+        if(this.isEnd) {
+          this.stream.removeAllListeners("readable");
           return reject(moreBytesErr);
+        }
       };
-      this.stream.once("readable", () => tryRead());
+      this.stream.on("readable", () => tryRead());
       this.stream.once("error", (err) => {
+        this.stream.removeAllListeners("readable");
         reject(err);
       });
       this.stream.once("end", () => {
         this.isEnd = true;
+        this.stream.removeAllListeners("readable");
         reject(moreBytesErr);
       });
       // If the stream never be readable, this promise will also end
       tryRead();
+    });
+  }
+
+  /**
+   * Reader can emit "packet", "end", "error" events.
+   * Reader can emit "packet" event when received lenPerPacket data.
+   * If canPutData() is false, the reader is stop until canPutData be true. 
+   * If there are no other data to read, the reader will emit "end" event 
+   */
+  public readToStream(lenPerPacket: number, canPutData: () => boolean, reader: EventEmitter) {
+    if(!reader)
+      return;
+    if(lenPerPacket === 0) {
+      reader.emit("end");
+      return;
+    }
+    this.stream.on("readable", () => {
+      if(!canPutData()) {
+        return;
+      } else {
+        const chunk = this.stream.read(lenPerPacket) || this.stream.read();
+        reader.emit("packet", chunk);
+      }
+    });
+
+    this.stream.once("error", (err) => {
+      this.stream.removeAllListeners("readable");
+      reader.emit("error", err);
+    });
+
+    this.stream.once("end", () => {
+      this.stream.removeAllListeners("readable");
+      reader.emit("end");
     });
   }
 

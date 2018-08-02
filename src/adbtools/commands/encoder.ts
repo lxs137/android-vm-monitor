@@ -1,5 +1,10 @@
-export const encode = (str: string): Buffer => {
-  const data = new Buffer(str);
+export const encode = (str: string|Buffer): Buffer => {
+  let data;
+  if(Buffer.isBuffer(str))
+    // skip null data
+    data = str.slice(0, -1);
+  else
+    data = new Buffer(str);
   const header = new Buffer(encodeLength(data.length));
   return Buffer.concat([header, data]);
 };

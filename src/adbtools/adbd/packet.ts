@@ -57,7 +57,11 @@ export class Packet {
   }
 
   static genSendPacket(command: number, arg0: number, arg1: number, data: Buffer): Packet {
-    return new Packet(command, arg0, arg1, data.length, getChecksum(data), getMagic(command), data);
+    if(!data) {
+      return new Packet(command, arg0, arg1, 0, 0, getMagic(command), new Buffer(0));
+    } else {
+      return new Packet(command, arg0, arg1, data.length, getChecksum(data), getMagic(command), data);
+    }
   }
 
   public toBuffer() {
