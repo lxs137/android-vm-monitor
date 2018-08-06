@@ -2,7 +2,10 @@ import { EventEmitter } from "events";
 import { Socket } from "net";
 import { CommandHelper } from "adbtools/commandHelper";
 import { Packet, PacketCommand } from "adbtools/adbd/packet";
-import { AdbServerConnection, ResponseCode, encode } from "adbtools/commands";
+import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
+import { ResponseCode } from "adbtools/adb-server/commandParser";
+import { encode } from "adbtools/adb-server/encoder";
+import { CommandReplyStream } from "adbtools/adb-server/commandReply";
 const logger = require("log4js").getLogger("commandHandler");
 
 /** 
@@ -19,6 +22,7 @@ export class CommandHandler extends EventEmitter {
   private remoteConn: Socket;
   // connection to local adb server
   private localConn: AdbServerConnection;
+  private localConnReader: CommandReplyStream;
   private hasAckMsg: boolean = true; 
 
   constructor(deviceID: string, localID: number, remoteID: number, maxPayload: number, connection: Socket) {
@@ -90,21 +94,20 @@ export class CommandHandler extends EventEmitter {
     ).then(
       () => {
         return new Promise((resolve, reject) => {
-          const reader = new EventEmitter();
-          reader.on("packet", (data) => {
+          this.localConnReader = this.localConn.parser.readToStream(this.maxPayload);
+          this.localConnReader.on("data", (data) => {
             this.sendPacketToRemote(Packet.genSendPacket(
-              PacketCommand.A_WRTE, this.localID, this.remoteID, data
+              PacketCommand.A_WRTE, this.localID, this.remoteID, <Buffer>data
             ));
             this.hasAckMsg = false;
+            this.localConnReader.pause();
           });
-          reader.on("end", () => resolve());
-          reader.on("error", (err) => reject(err));
-          this.localConn.parser.readToStream(
-            this.maxPayload, () => this.hasAckMsg && !this.isClose, reader);     
+          this.localConnReader.on("end", () => resolve());
+          this.localConnReader.on("error", (err) => reject(err));
         });
       }
     ).then(
-      () => this.emit("end")
+      () => this.close()
     ).catch(
       (err) => {
         this.emit("error", new Error(
@@ -118,6 +121,8 @@ export class CommandHandler extends EventEmitter {
     if(this.isClose)
       return;
     this.hasAckMsg = true;
+    if(this.localConnReader)
+      this.localConnReader.resume();
   }
 
   private handleWritePacket(packet: Packet) {

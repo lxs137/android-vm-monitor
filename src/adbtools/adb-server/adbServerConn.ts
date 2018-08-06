@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { Socket, connect } from "net";
-import { CommandParser } from "adbtools/commands/commandParser";
+import { CommandParser } from "adbtools/adb-server/commandParser";
 import { cmdFileExec } from "utils/command";
 const logger = require("log4js").getLogger("adbServerConn");
 

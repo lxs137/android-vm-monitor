@@ -1,4 +1,5 @@
-import { AdbServerConnection, CommandParser, GetPropCommand, TransportCommand, ConnectDeviceCommand } from "adbtools/commands";
+import { GetPropCommand, TransportCommand, ConnectDeviceCommand } from "adbtools/commands";
+import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
 const logger = require("log4js").getLogger("adbCommandHelper");
 
 const REMOTE_DEVICE_RE = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}:\d+$/;

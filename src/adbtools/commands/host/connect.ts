@@ -1,6 +1,6 @@
-import { AdbServerConnection } from "adbtools/commands/adbServerConn";
+import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
+import { ResponseCode } from "adbtools/adb-server/commandParser";
 import { Command } from "adbtools/commands/command";
-import { ResponseCode } from "adbtools/commands/commandParser";
 
 // Possible response:
 // "unable to connect to <deviceID>"

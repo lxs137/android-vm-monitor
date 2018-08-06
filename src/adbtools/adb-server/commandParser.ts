@@ -1,6 +1,8 @@
 import { Socket } from "net";
 import { EventEmitter } from "events";
-import { decodeLength } from "adbtools/commands/encoder";
+import { decodeLength } from "adbtools/adb-server/encoder";
+import { CommandReplyStream } from "adbtools/adb-server/commandReply";
+const logger = require("log4js").getLogger("commandParser");
 
 export const ResponseCode = {
   OKAY: "OKAY",
@@ -118,31 +120,25 @@ export class CommandParser {
    * If canPutData() is false, the reader is stop until canPutData be true. 
    * If there are no other data to read, the reader will emit "end" event 
    */
-  public readToStream(lenPerPacket: number, canPutData: () => boolean, reader: EventEmitter) {
-    if(!reader)
-      return;
-    if(lenPerPacket === 0) {
-      reader.emit("end");
-      return;
+  public readToStream(packetLen: number): CommandReplyStream {
+    const reply = new CommandReplyStream(packetLen);
+    if(this.isEnd || packetLen <= 0) {
+      reply.end();
+      return reply;
     }
-    this.stream.on("readable", () => {
-      if(!canPutData()) {
-        return;
-      } else {
-        const chunk = this.stream.read(lenPerPacket) || this.stream.read();
-        reader.emit("packet", chunk);
-      }
+    this.stream.on("data", (data) => {
+      reply.write(data);
     });
-
     this.stream.once("error", (err) => {
-      this.stream.removeAllListeners("readable");
-      reader.emit("error", err);
+      this.stream.removeAllListeners("data");
+      reply.emit("error", err);
     });
-
     this.stream.once("end", () => {
-      this.stream.removeAllListeners("readable");
-      reader.emit("end");
+      this.isEnd = true;
+      this.stream.removeAllListeners("data");
+      reply.end();
     });
+    return reply;
   }
 
   public readASCII(len: number): Promise<string> {

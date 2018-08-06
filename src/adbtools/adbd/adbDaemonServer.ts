@@ -1,4 +1,4 @@
-import { Socket, Server, createServer } from "net";
+import { Socket, Server, createServer, ListenOptions } from "net";
 import { EventEmitter } from "events";
 import { AdbDaemonSocket, AdbDaemonAuthFunc } from "adbtools/adbd/adbDaemonSocket";
 const logger = require("log4js").getLogger("adbDaemonServer");
@@ -34,8 +34,10 @@ export class AdbDaemonServer extends EventEmitter {
   /**
    * The Same as net.Server.listen 
    */
-  public listen(args: any) {
+  public listen(args: ListenOptions) {
     this.server.listen(args);
+    logger.info("AdbDaemonServer is listen on %s:%d", 
+      args.host || "localhost", args.port);
   }
 
   public close() {

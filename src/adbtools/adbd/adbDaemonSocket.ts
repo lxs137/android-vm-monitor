@@ -192,7 +192,7 @@ export class AdbDaemonSocket extends EventEmitter {
     });
     handle.on("error", (err) => {
       this.handlers.remove(localID.toString());
-      logger.error("'%s' handle has err: %s", command);
+      logger.error("'%s' handle has err: %s", command, err.message);
     });
     handle.handle(packet);
   }
@@ -207,7 +207,7 @@ export class AdbDaemonSocket extends EventEmitter {
     if(handle)
       handle.handle(packet);
     else
-      logger.info("local-id(%s) handle is not exist", localID);
+      logger.debug("local-id(%s) handle is not exist, ignore packet", localID);
   }
 
   public write(packet: Packet) {
