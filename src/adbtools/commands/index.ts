@@ -1,3 +1,5 @@
+export { ResponseCode, Command } from "adbtools/commands/command";
+
 // Commands
 // Host Services
 // host:transport:<serial-number>

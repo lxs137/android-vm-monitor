@@ -1,6 +1,6 @@
 import * as net from "net";
 import * as log4js from "log4js";
-import { ensureDeviceConnect } from "utils/adbUtils";
+import { ensureDeviceConnect, getWechatProcess } from "utils/adbUtils";
 import { AdbDaemonServer } from "adbtools/adbd/adbDaemonServer";
 
 describe("Adb Daemon Server Test", () => {
@@ -42,8 +42,18 @@ describe("Adb Daemon Server Test", () => {
     );
   }, 10000);
 
-  it("Test connect to a remote device", (done) => {
-    
+  it("Test command to a remote device", (done) => {
+    const deviceID = "localhost:" + serverPort;
+    ensureDeviceConnect(deviceID).then(
+      () => {
+        getWechatProcess(deviceID).then(
+          (processes) => {
+            console.log(processes);
+            done();
+          }
+        );
+      }
+    );
   });
 
   afterAll((done) => {

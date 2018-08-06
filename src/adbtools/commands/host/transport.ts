@@ -1,6 +1,6 @@
-import { Command } from "adbtools/commands/command";
+import { Command, ResponseCode } from "adbtools/commands/command";
 import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
-import { CommandParser, ResponseCode } from "adbtools/adb-server/commandParser";
+import { CommandParser } from "adbtools/adb-server/commandParser";
 
 export class TransportCommand extends Command {
   private deviceID: string;

@@ -3,7 +3,7 @@ import { Socket } from "net";
 import { CommandHelper } from "adbtools/commandHelper";
 import { Packet, PacketCommand } from "adbtools/adbd/packet";
 import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
-import { ResponseCode } from "adbtools/adb-server/commandParser";
+import { ResponseCode } from "adbtools/commands";
 import { encode } from "adbtools/adb-server/encoder";
 import { CommandReplyStream } from "adbtools/adb-server/commandReply";
 const logger = require("log4js").getLogger("commandHandler");
@@ -102,16 +102,32 @@ export class CommandHandler extends EventEmitter {
             this.hasAckMsg = false;
             this.localConnReader.pause();
           });
-          this.localConnReader.on("end", () => resolve());
-          this.localConnReader.on("error", (err) => reject(err));
+          this.localConnReader.once("hasData", () => {
+            this.localConnReader.forceFlush();
+          });
+          this.localConnReader.on("end", () => {
+            // Send remain data in cache
+            this.localConnReader.removeAllListeners("data");
+            let remainData;
+            if(remainData = this.localConnReader.getRemainData()) {
+              this.sendPacketToRemote(Packet.genSendPacket(
+                PacketCommand.A_WRTE, this.localID, this.remoteID, remainData
+              ));
+            }
+            resolve();
+          });
+          this.localConnReader.on("error", (err) => {
+            this.localConnReader.removeAllListeners("data");
+            reject(err);
+          });
         });
       }
     ).then(
       () => this.close()
     ).catch(
-      (err) => {
+      (err: Error) => {
         this.emit("error", new Error(
-          `Handle Open Packet err: ${err.message}`
+          `Handle Open Packet err: ${err.message} \n ${err.stack}`
         ));
       }
     );
@@ -121,8 +137,10 @@ export class CommandHandler extends EventEmitter {
     if(this.isClose)
       return;
     this.hasAckMsg = true;
-    if(this.localConnReader)
+    if(this.localConnReader) {
       this.localConnReader.resume();
+      this.localConnReader.forceFlush();
+    }
   }
 
   private handleWritePacket(packet: Packet) {
@@ -151,7 +169,7 @@ export class CommandHandler extends EventEmitter {
         reject(new Error("Connection to local adb server has not create"));
       this.localConn.send(
         needEncode ? encode(packet.data) : packet.data, () => {
-        logger.debug("Transimit packet to local: %s", packet.data);
+        logger.info("Transimit packet to local: %s", packet.data);
         resolve();
       });
     });

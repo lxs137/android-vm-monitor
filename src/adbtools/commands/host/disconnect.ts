@@ -1,28 +1,26 @@
+import { Command, ResponseCode } from "adbtools/commands";
 import { AdbServerConnection } from "adbtools/adb-server/adbServerConn";
-import { ResponseCode, Command } from "adbtools/commands";
 
 // Possible response:
-// "unable to connect to <deviceID>"
-// "connected to <deviceID>"
-// "already connected to <deviceID>"
-const RESPONSE_OK = /connected to|already connected/;
+// "No such device <deviceID>"
+// ""
+const RESPONSE_OK = /^$/;
 
-export class ConnectDeviceCommand extends Command {
+export class DisconnectDeviceCommand extends Command {
   private deviceID: string;
   constructor(connection: AdbServerConnection, deviceID: string) {
     super(connection);
     this.deviceID = deviceID;
   }
-
   public execute(): Promise<any> {
-    return this.send(`host:connect:${this.deviceID}`).then(
+    return this.send(`host:disconnect:${this.deviceID}`).then(
       () => this.parser.readASCII(4)
     ).then(
       (responseCode) => {
-        if(responseCode === ResponseCode.OKAY) {
+        if (responseCode === ResponseCode.OKAY) {
           return this.parser.readValue().then(
             (response) => {
-              if(RESPONSE_OK.test(<any>response))
+              if (RESPONSE_OK.test(<any>response))
                 return Promise.resolve(this.deviceID);
               else
                 return Promise.reject(response.toString());

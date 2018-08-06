@@ -1,14 +1,17 @@
 import { Transform, TransformOptions, TransformCallback } from "stream";
+const logger = require("log4js").getLogger("commandReply");
 
 /** 
  * Input stream, output packets 
  */
 export class CommandReplyStream extends Transform {
   private buffer: CommandReplyBuffer;
+  private isEmpty: boolean = true;
   
   constructor(packetLen: number, streamOpt?: TransformOptions) {
     super({
       writableObjectMode: true,
+      readableObjectMode: true,
       ...streamOpt
     });
     this.buffer = new CommandReplyBuffer(packetLen);
@@ -18,6 +21,10 @@ export class CommandReplyStream extends Transform {
     if(!Buffer.isBuffer(chunk))
       chunk = new Buffer(chunk, encoding);
     this.buffer.addData(chunk);
+    if (this.isEmpty) {
+      this.isEmpty = false;
+      this.emit("hasData");
+    }
     let packet;
     while(packet = this.buffer.getPacket()) {
       this.push(packet);
@@ -25,9 +32,14 @@ export class CommandReplyStream extends Transform {
     callback();
   }
 
-  _flush(callback: TransformCallback) {
-    this.push(this.buffer.getRemainData());
-    callback();
+  public forceFlush() {
+    const remainData = this.getRemainData();
+    if(remainData && remainData.length >= 1)
+      this.push(remainData);
+  }
+
+  public getRemainData(): Buffer {
+    return this.buffer.getRemainData();
   }
 }
 
@@ -59,7 +71,9 @@ export class CommandReplyBuffer {
   }
 
   public getRemainData(): Buffer {
-    return this.cache;
+    const data = this.cache;
+    this.cache = this.cache.slice(this.cache.length);
+    return data;
   }
 
   private cutToPacket() {

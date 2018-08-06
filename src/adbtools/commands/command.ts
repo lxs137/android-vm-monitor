@@ -24,3 +24,15 @@ export abstract class Command {
   }
 }
 
+export const ResponseCode = {
+  OKAY: "OKAY",
+  FAIL: "FAIL",
+  STAT: "STAT",
+  LIST: "LIST",
+  DENT: "DENT",
+  RECV: "RECV",
+  DATA: "DATA",
+  DONE: "DONE",
+  SEND: "SEND",
+  QUIT: "QUIT"
+};

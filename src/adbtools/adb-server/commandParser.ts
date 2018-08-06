@@ -4,19 +4,6 @@ import { decodeLength } from "adbtools/adb-server/encoder";
 import { CommandReplyStream } from "adbtools/adb-server/commandReply";
 const logger = require("log4js").getLogger("commandParser");
 
-export const ResponseCode = {
-  OKAY: "OKAY",
-  FAIL: "FAIL",
-  STAT: "STAT",
-  LIST: "LIST",
-  DENT: "DENT",
-  RECV: "RECV",
-  DATA: "DATA",
-  DONE: "DONE",
-  SEND: "SEND",
-  QUIT: "QUIT"
-};
-
 export class CommandParser {
   private stream: Socket;
   private isEnd: boolean = false;
@@ -127,6 +114,7 @@ export class CommandParser {
       return reply;
     }
     this.stream.on("data", (data) => {
+      logger.debug("Receive data: %d", data.length);
       reply.write(data);
     });
     this.stream.once("error", (err) => {

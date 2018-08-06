@@ -102,7 +102,7 @@ export class Packet {
       case PacketCommand.A_WRTE:
         commandStr = "WRTE"; break;
     }  
-    return `{ \n\t${commandStr} \n\targ0: ${this.arg0} \n\targ1: ${this.arg1} \n\tcheck: ${this.checksum} \n\tmagic: ${this.magic} \n}`;
+    return `{ \n\t${commandStr} \n\targ0: ${this.arg0} \n\targ1: ${this.arg1} \n\tdataLen: ${this.data.length} \n}`;
   }
 }
 

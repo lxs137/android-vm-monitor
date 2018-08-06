@@ -9,9 +9,11 @@ const logger = require("log4js").getLogger("adbDaemonServer");
 export class AdbDaemonServer extends EventEmitter {
   private connections: AdbDaemonSocket[];
   private server: Server;
+  private deviceID: string;
 
   constructor(deviceID: string, auth: AdbDaemonAuthFunc) {
     super();
+    this.deviceID = deviceID;
     this.connections = [];
     this.server = createServer({
       allowHalfOpen: true
@@ -25,7 +27,7 @@ export class AdbDaemonServer extends EventEmitter {
       this.emit("close");
     });
     this.server.on("connection", (conn: Socket) => {
-      const socket = new AdbDaemonSocket(deviceID, conn, auth);
+      const socket = new AdbDaemonSocket(this.deviceID, conn, auth);
       this.connections.push(socket);
       this.emit("connection", socket);
     });
@@ -36,8 +38,8 @@ export class AdbDaemonServer extends EventEmitter {
    */
   public listen(args: ListenOptions) {
     this.server.listen(args);
-    logger.info("AdbDaemonServer is listen on %s:%d", 
-      args.host || "localhost", args.port);
+    logger.info("AdbDaemonServer to %s is listen on %s:%d", 
+      this.deviceID, args.host || "localhost", args.port);
   }
 
   public close() {
