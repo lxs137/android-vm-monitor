@@ -139,7 +139,6 @@ export class CommandHandler extends EventEmitter {
     this.hasAckMsg = true;
     if(this.localConnReader) {
       this.localConnReader.resume();
-      this.localConnReader.forceFlush();
     }
   }
 

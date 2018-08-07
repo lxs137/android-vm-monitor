@@ -1,12 +1,15 @@
 import { Transform, TransformOptions, TransformCallback } from "stream";
 const logger = require("log4js").getLogger("commandReply");
 
+const MinDataEmitTimer = 500;
+
 /** 
  * Input stream, output packets 
  */
 export class CommandReplyStream extends Transform {
   private buffer: CommandReplyBuffer;
   private isEmpty: boolean = true;
+  private forceEmitIntervalID: NodeJS.Timer;
   
   constructor(packetLen: number, streamOpt?: TransformOptions) {
     super({
@@ -24,22 +27,34 @@ export class CommandReplyStream extends Transform {
     if (this.isEmpty) {
       this.isEmpty = false;
       this.emit("hasData");
+      this.forceEmitIntervalID = setInterval(() => {
+        this.forceFlush();
+      }, MinDataEmitTimer);
     }
     let packet;
     while(packet = this.buffer.getPacket()) {
-      this.push(packet);
+      this.emitData(packet);
     }
     callback();
   }
 
   public forceFlush() {
-    const remainData = this.getRemainData();
-    if(remainData && remainData.length >= 1)
-      this.push(remainData);
+    this.emitData(this.getRemainData());
   }
 
   public getRemainData(): Buffer {
     return this.buffer.getRemainData();
+  }
+
+  private emitData(data: Buffer) {
+    if(data && data.length >= 1) {
+      this.push(data);
+      if(this.forceEmitIntervalID)
+        clearInterval(this.forceEmitIntervalID);
+      this.forceEmitIntervalID = setInterval(() => {
+        this.forceFlush();
+      }, MinDataEmitTimer);
+    }
   }
 }
 
